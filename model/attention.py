@@ -76,3 +76,42 @@ class CausalSelfAttention(nn.Module):
 
         return self.out_proj(out)
     
+class CachedCausalSelfAttention(nn.Module):
+    def __init__(self, config: ModelConfig):
+        super().__init__()
+        self.n_heads = config.n_heads
+        self.head_dim = config.head_dim
+        self.scale = 1.0 / math.sqrt(self.head_dim)
+
+        self.qkv_proj = nn.Linear(config.d_model, 3 * config.d_model)
+        self.out_proj = nn.Linear(config.d_model, config.d_model)
+
+    def forward(self, x_t: torch.Tensor, kv_cache) -> torch.Tensor:
+        """
+        x_t: (B, 1, D)
+        kv_cache: KVCache
+        return: (B, 1, D)
+        """
+        B, T, D = x_t.shape
+        assert T == 1, "Cached attention expects exactly one token"
+
+        qkv = self.qkv_proj(x_t)
+        q, k, v = qkv.chunk(3, dim=-1)
+
+        q = q.view(B, 1, self.n_heads, self.head_dim).transpose(1, 2)
+        k = k.view(B, 1, self.n_heads, self.head_dim).transpose(1, 2)
+        v = v.view(B, 1, self.n_heads, self.head_dim).transpose(1, 2)
+
+        # append new K, V to cache
+        kv_cache.append(k, v)
+
+        # retrieve full cached K, V
+        k_full = kv_cache.keys     # (B, H, T_total, Dh)
+        v_full = kv_cache.values
+
+        scores = torch.matmul(q, k_full.transpose(-2, -1)) * self.scale
+        weights = torch.softmax(scores, dim=-1)
+        out = torch.matmul(weights, v_full)
+
+        out = out.transpose(1, 2).contiguous().view(B, 1, D)
+        return self.out_proj(out)
