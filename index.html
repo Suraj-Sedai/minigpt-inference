@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MiniGPT-Inference | Modern Showcase</title>
+    <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.0/css/line.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0f1419;
+            --bg-light: #1a1f2e;
+            --accent: #6366f1;
+            --accent-light: #818cf8;
+            --text: #f1f5f9;
+            --text-dim: #94a3b8;
+            --border: #2d3748;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* 3D Canvas Background */
+        #canvas3d {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            z-index: 0;
+            opacity: 0.4;
+        }
+
+        .content {
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Modern Floating Navigation */
+        nav {
+            position: fixed;
+            top: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 20, 25, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 50px;
+            padding: 0.8rem 2rem;
+            z-index: 100;
+            display: flex;
+            gap: 2.5rem;
+            align-items: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        nav a {
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        nav a:hover {
+            color: var(--accent);
+        }
+
+        nav a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--accent);
+            transition: width 0.3s ease;
+        }
+
+        nav a:hover::after {
+            width: 100%;
+        }
+
+        .nav-logo {
+            color: var(--accent);
+            font-weight: 700;
+            font-size: 1.1rem;
+            letter-spacing: -1px;
+            margin-right: 1rem;
+            padding-right: 1rem;
+            border-right: 1px solid var(--border);
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+            margin-top: -4rem;
+        }
+
+        .hero-content {
+            max-width: 800px;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 8vw, 4rem);
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -2px;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            color: var(--text-dim);
+            margin-bottom: 2.5rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.8;
+        }
+
+        .cta-group {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.9rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.85rem;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-light);
+            box-shadow: 0 0 30px rgba(99, 102, 241, 0.6);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--accent);
+            border: 1.5px solid var(--accent);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(99, 102, 241, 0.1);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+            transform: translateY(-2px);
+        }
+
+        /* Sections */
+        section {
+            padding: 6rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-size: clamp(1.8rem, 5vw, 2.5rem);
+            font-weight: 700;
+            margin-bottom: 3rem;
+            text-align: center;
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 3px;
+            background: var(--accent);
+            border-radius: 2px;
+        }
+
+        /* About Section */
+        .about-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: center;
+            margin-top: 3rem;
+        }
+
+        .about-text h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--accent);
+        }
+
+        .about-text p {
+            color: var(--text-dim);
+            margin-bottom: 1.5rem;
+            line-height: 1.9;
+        }
+
+        .highlights {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .highlight-item {
+            background: rgba(99, 102, 241, 0.05);
+            border: 1px solid var(--border);
+            padding: 1.5rem;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .highlight-item:hover {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: var(--accent);
+            transform: translateY(-5px);
+        }
+
+        .highlight-item strong {
+            color: var(--accent);
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .highlight-item p {
+            font-size: 0.95rem;
+            margin: 0;
+        }
+
+        /* Metrics Section */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(99, 102, 241, 0.05));
+            border: 1px solid var(--border);
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .metric-card:hover {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(99, 102, 241, 0.08));
+            border-color: var(--accent);
+            transform: translateY(-10px);
+        }
+
+        .metric-card:hover::before {
+            opacity: 1;
+        }
+
+        .metric-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        .metric-description {
+            font-size: 0.9rem;
+            color: var(--text-dim);
+        }
+
+        /* Features Section */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .feature-card {
+            background: rgba(26, 31, 46, 0.5);
+            border: 1px solid var(--border);
+            padding: 2rem;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            color: var(--accent);
+            margin-bottom: 1rem;
+        }
+
+        .feature-card h3 {
+            margin-bottom: 0.8rem;
+            font-size: 1.2rem;
+        }
+
+        .feature-card p {
+            color: var(--text-dim);
+            font-size: 0.95rem;
+        }
+
+        .feature-card:hover {
+            background: rgba(26, 31, 46, 0.8);
+            border-color: var(--accent);
+            transform: translateY(-8px);
+        }
+
+        /* Architecture Section */
+        .arch-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .arch-card {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(99, 102, 241, 0.03));
+            border: 1px solid var(--border);
+            padding: 2rem;
+            border-radius: 12px;
+        }
+
+        .arch-card h3 {
+            color: var(--accent);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            font-size: 1.2rem;
+        }
+
+        .arch-card ul {
+            list-style: none;
+        }
+
+        .arch-card li {
+            color: var(--text-dim);
+            margin-bottom: 0.8rem;
+            padding-left: 1.5rem;
+            position: relative;
+            font-size: 0.95rem;
+        }
+
+        .arch-card li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        /* Tech Stack */
+        .tech-stack {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1.5rem;
+            margin-top: 3rem;
+        }
+
+        .tech-item {
+            background: rgba(99, 102, 241, 0.05);
+            border: 1px solid var(--border);
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .tech-item:hover {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: var(--accent);
+            transform: scale(1.05);
+        }
+
+        .tech-icon {
+            font-size: 2rem;
+            color: var(--accent);
+            margin-bottom: 0.8rem;
+        }
+
+        .tech-item h4 {
+            margin-bottom: 0.3rem;
+            font-size: 0.95rem;
+        }
+
+        .tech-item p {
+            color: var(--text-dim);
+            font-size: 0.85rem;
+        }
+
+        /* Code Section */
+        .code-section {
+            background: rgba(26, 31, 46, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 3rem;
+        }
+
+        .code-block {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2rem;
+            overflow-x: auto;
+            border-radius: 8px;
+        }
+
+        code {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: var(--text);
+        }
+
+        .code-keyword {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .code-string {
+            color: #34d399;
+        }
+
+        .code-comment {
+            color: var(--text-dim);
+            font-style: italic;
+        }
+
+        .code-number {
+            color: #f59e0b;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .cta-section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .cta-section > p {
+            color: var(--text-dim);
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        /* Footer */
+        footer {
+            background: rgba(15, 20, 25, 0.5);
+            border-top: 1px solid var(--border);
+            padding: 2rem;
+            text-align: center;
+            color: var(--text-dim);
+            margin-top: 4rem;
+        }
+
+        footer a {
+            color: var(--accent);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        footer a:hover {
+            color: var(--accent-light);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            nav {
+                top: 1rem;
+                gap: 1.5rem;
+                padding: 0.7rem 1.5rem;
+            }
+
+            nav a {
+                font-size: 0.85rem;
+            }
+
+            .nav-logo {
+                font-size: 0.9rem;
+            }
+
+            .about-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .highlights {
+                grid-template-columns: 1fr;
+            }
+
+            section {
+                padding: 4rem 1.5rem;
+            }
+
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .hero p {
+                font-size: 1rem;
+            }
+
+            .cta-group {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .section-title {
+                margin-bottom: 2rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            nav {
+                padding: 0.6rem 1rem;
+                gap: 1rem;
+            }
+
+            .nav-logo {
+                display: none;
+            }
+
+            nav a {
+                font-size: 0.75rem;
+            }
+
+            .hero {
+                padding: 1rem;
+                margin-top: -2rem;
+            }
+
+            .hero h1 {
+                font-size: 1.5rem;
+                margin-bottom: 1rem;
+            }
+
+            .hero p {
+                font-size: 0.9rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .metric-number {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 3D Canvas -->
+    <canvas id="canvas3d"></canvas>
+
+    <!-- Modern Navigation -->
+    <nav>
+        <div class="nav-logo">MiniGPT</div>
+        <a href="#about">About</a>
+        <a href="#metrics">Metrics</a>
+        <a href="#features">Features</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#contact">Contact</a>
+    </nav>
+
+    <!-- Content -->
+    <div class="content">
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero-content">
+                <h1>MiniGPT Inference Engine</h1>
+                <p>Production-grade Transformer inference from scratch with KV-Cache optimization and O(T) complexity decoding</p>
+                <div class="cta-group">
+                    <button class="btn btn-primary" onclick="window.open('https://github.com/Suraj-Sedai/minigpt-inference', '_blank')">
+                        <i class="uil uil-github-alt"></i> View on GitHub
+                    </button>
+                    <button class="btn btn-secondary" onclick="window.open('https://surajsedai.com.np', '_blank')">
+                        <i class="uil uil-arrow-right"></i> My Portfolio
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about">
+            <h2 class="section-title">What is MiniGPT?</h2>
+            <div class="about-grid">
+                <div class="about-text">
+                    <h3>Advanced Transformer Implementation</h3>
+                    <p>MiniGPT-Inference is a complete GPT-style transformer inference engine built entirely from scratch in PyTorch. It demonstrates how modern LLMs achieve remarkable performance through intelligent architectural decisions and cutting-edge optimization techniques.</p>
+                    <p>This project showcases production-quality code with full type hints, comprehensive testing, and detailed documentation—everything you need to understand and deploy efficient transformer inference at scale.</p>
+                </div>
+                <div class="highlights">
+                    <div class="highlight-item">
+                        <strong>🚀 Complexity Reduction</strong>
+                        <p>O(T²) → O(T) via per-layer KV caching</p>
+                    </div>
+                    <div class="highlight-item">
+                        <strong>⚡ Performance Boost</strong>
+                        <p>~1.5× speedup on CPU, increasing with sequence length</p>
+                    </div>
+                    <div class="highlight-item">
+                        <strong>🎯 Numerical Accuracy</strong>
+                        <p>Max error < 1e-6 vs full sequence</p>
+                    </div>
+                    <div class="highlight-item">
+                        <strong>🛠️ Advanced Sampling</strong>
+                        <p>Temperature, top-k, top-p, repetition penalty</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Metrics Section -->
+        <section id="metrics">
+            <h2 class="section-title">Performance Metrics</h2>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-number">O(T²)→O(T)</div>
+                    <div class="metric-label">Complexity Reduction</div>
+                    <div class="metric-description">Per-layer KV caching eliminates quadratic recomputation</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-number">1.5×</div>
+                    <div class="metric-label">CPU Speedup</div>
+                    <div class="metric-description">Cached vs non-cached decoding performance</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-number">&lt;1e-6</div>
+                    <div class="metric-label">Max Error</div>
+                    <div class="metric-description">Incremental vs full sequence accuracy</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-number">8</div>
+                    <div class="metric-label">Modules</div>
+                    <div class="metric-description">Core + inference components</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-number">100%</div>
+                    <div class="metric-label">Type Hints</div>
+                    <div class="metric-description">Production-grade code</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-number">∞</div>
+                    <div class="metric-label">Scalability</div>
+                    <div class="metric-description">Works with any sequence length</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section id="features">
+            <h2 class="section-title">Core Features</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="uil uil-flash"></i></div>
+                    <h3>KV-Cache Optimization</h3>
+                    <p>Intelligent per-layer key-value cache that eliminates redundant computations and reduces memory overhead during autoregressive decoding.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="uil uil-fire"></i></div>
+                    <h3>Incremental Decoding</h3>
+                    <p>Forward_step optimizations with correct positional alignment achieving numerical equivalence to full sequence decoding.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="uil uil-cog"></i></div>
+                    <h3>Logits Processing</h3>
+                    <p>Production-style pipeline: temperature scaling, top-k, top-p nucleus sampling, and repetition penalty support.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="uil uil-cube"></i></div>
+                    <h3>Clean Architecture</h3>
+                    <p>Modular design with separate components for embeddings, attention, blocks, and generation logic.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="uil uil-graduation-cap"></i></div>
+                    <h3>Educational Value</h3>
+                    <p>Jupyter notebooks with detailed explanations, reference documentation, and implementation walkthroughs.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="uil uil-check-circle"></i></div>
+                    <h3>Production Ready</h3>
+                    <p>Full type hints, comprehensive testing, benchmarks, and deployment guidelines included.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Architecture Section -->
+        <section id="architecture">
+            <h2 class="section-title">Project Architecture</h2>
+            <div class="arch-grid">
+                <div class="arch-card">
+                    <h3><i class="uil uil-cube"></i> Model Core</h3>
+                    <ul>
+                        <li>gpt.py - Main model & forward pass</li>
+                        <li>attention.py - Multi-head & cached attention</li>
+                        <li>block.py - Transformer blocks</li>
+                        <li>embeddings.py - Token & positional</li>
+                        <li>layers.py - Feed-forward MLP</li>
+                        <li>config.py - Configuration</li>
+                    </ul>
+                </div>
+                <div class="arch-card">
+                    <h3><i class="uil uil-rocket"></i> Inference Optimized</h3>
+                    <ul>
+                        <li>cache.py - KV-Cache implementation</li>
+                        <li>generate.py - Text generation logic</li>
+                        <li>Temperature-based sampling</li>
+                        <li>Batched processing</li>
+                        <li>Streaming support</li>
+                        <li>Memory efficient</li>
+                    </ul>
+                </div>
+                <div class="arch-card">
+                    <h3><i class="uil uil-book"></i> Documentation</h3>
+                    <ul>
+                        <li>experiments.ipynb - Notebook</li>
+                        <li>kv-cache.pdf - Reference doc</li>
+                        <li>Shape specifications</li>
+                        <li>Usage examples</li>
+                        <li>Type hints</li>
+                        <li>Best practices</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h2 class="section-title" style="margin-top: 4rem;">Technology Stack</h2>
+            <div class="tech-stack">
+                <div class="tech-item">
+                    <div class="tech-icon"><i class="uil uil-code-branch"></i></div>
+                    <h4>Core</h4>
+                    <p>Python 3.x</p>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-icon"><i class="uil uil-box"></i></div>
+                    <h4>Framework</h4>
+                    <p>PyTorch</p>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-icon"><i class="uil uil-notebook"></i></div>
+                    <h4>Learning</h4>
+                    <p>Jupyter</p>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-icon"><i class="uil uil-git"></i></div>
+                    <h4>Version Control</h4>
+                    <p>Git</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Code Section -->
+        <section>
+            <h2 class="section-title">Quick Start</h2>
+            <div class="code-section">
+                <div class="code-block">
+                    <pre><code><span class="code-keyword">from</span> model.gpt <span class="code-keyword">import</span> MiniGPTInferenceModel
+<span class="code-keyword">from</span> inference.generate <span class="code-keyword">import</span> generate
+
+<span class="code-comment"># Initialize model with KV-cache support</span>
+model = MiniGPTInferenceModel(config)
+
+<span class="code-comment"># Generate text with optimized decoding</span>
+prompt = <span class="code-string">"The future of AI inference is"</span>
+output = generate(
+    model=model,
+    prompt_ids=tokenize(prompt),
+    max_new_tokens=<span class="code-number">100</span>,
+    temperature=<span class="code-number">0.7</span>,
+    top_p=<span class="code-number">0.9</span>
+)</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="cta-section" id="contact">
+            <h2>Ready to Explore?</h2>
+            <p>Dive into the codebase and learn how modern LLMs achieve efficient inference at scale.</p>
+            <div class="cta-group">
+                <button class="btn btn-primary" onclick="window.open('https://github.com/Suraj-Sedai/minigpt-inference', '_blank')">
+                    <i class="uil uil-github-alt"></i> View on GitHub
+                </button>
+                <button class="btn btn-secondary" onclick="window.open('https://surajsedai.com.np', '_blank')">
+                    <i class="uil uil-arrow-right"></i> Back to Portfolio
+                </button>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer>
+            <p>Built with <span style="color: #f59e0b;">❤️</span> by <a href="https://surajsedai.com.np" target="_blank">Suraj Sedai</a></p>
+            <p style="font-size: 0.9rem; margin-top: 0.5rem;">Transformer Inference Engine | KV-Cache Optimization | Production Ready</p>
+        </footer>
+    </div>
+
+    <!-- Three.js Script -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        let scene, camera, renderer;
+        let particles = [];
+
+        function initThreeJS() {
+            const canvas = document.getElementById('canvas3d');
+            
+            scene = new THREE.Scene();
+            
+            camera = new THREE.PerspectiveCamera(
+                75, 
+                window.innerWidth / window.innerHeight, 
+                0.1, 
+                1000
+            );
+            camera.position.z = 50;
+            
+            renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            
+            // Create particle network
+            createParticleNetwork();
+            
+            // Event listeners
+            window.addEventListener('resize', onWindowResize);
+            document.addEventListener('mousemove', onMouseMove);
+            
+            animate();
+        }
+
+        function createParticleNetwork() {
+            const particleCount = 80;
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+            const velocities = [];
+
+            for (let i = 0; i < particleCount; i++) {
+                const x = (Math.random() - 0.5) * 100;
+                const y = (Math.random() - 0.5) * 100;
+                const z = (Math.random() - 0.5) * 100;
+
+                positions[i * 3] = x;
+                positions[i * 3 + 1] = y;
+                positions[i * 3 + 2] = z;
+
+                velocities.push({
+                    x: (Math.random() - 0.5) * 0.3,
+                    y: (Math.random() - 0.5) * 0.3,
+                    z: (Math.random() - 0.5) * 0.3
+                });
+
+                particles.push({ x, y, z, vx: velocities[i].x, vy: velocities[i].y, vz: velocities[i].z });
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+            const material = new THREE.PointsMaterial({
+                color: 0x6366f1,
+                size: 0.8,
+                transparent: true,
+                opacity: 0.6,
+                sizeAttenuation: true
+            });
+
+            const points = new THREE.Points(geometry, material);
+            scene.add(points);
+
+            // Create connection lines
+            const lineGeometry = new THREE.BufferGeometry();
+            const linePositions = [];
+
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dz = particles[i].z - particles[j].z;
+                    const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+                    if (distance < 30) {
+                        linePositions.push(particles[i].x, particles[i].y, particles[i].z);
+                        linePositions.push(particles[j].x, particles[j].y, particles[j].z);
+                    }
+                }
+            }
+
+            lineGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(linePositions), 3));
+
+            const lineMaterial = new THREE.LineBasicMaterial({
+                color: 0x6366f1,
+                transparent: true,
+                opacity: 0.2,
+                linewidth: 1
+            });
+
+            const lines = new THREE.LineSegments(lineGeometry, lineMaterial);
+            scene.add(lines);
+
+            scene.userData.points = points;
+            scene.userData.lines = lines;
+            scene.userData.particles = particles;
+        }
+
+        function onMouseMove(event) {
+            const x = (event.clientX / window.innerWidth) * 2 - 1;
+            const y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            camera.position.x += (x * 10 - camera.position.x) * 0.05;
+            camera.position.y += (y * 10 - camera.position.y) * 0.05;
+            camera.lookAt(0, 0, 0);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Rotate scene
+            scene.rotation.x += 0.0001;
+            scene.rotation.y += 0.0002;
+
+            // Update particle positions
+            if (scene.userData.particles) {
+                const positions = scene.userData.points.geometry.attributes.position.array;
+
+                scene.userData.particles.forEach((particle, i) => {
+                    particle.x += particle.vx;
+                    particle.y += particle.vy;
+                    particle.z += particle.vz;
+
+                    // Bounce off boundaries
+                    if (Math.abs(particle.x) > 50) particle.vx *= -1;
+                    if (Math.abs(particle.y) > 50) particle.vy *= -1;
+                    if (Math.abs(particle.z) > 50) particle.vz *= -1;
+
+                    positions[i * 3] = particle.x;
+                    positions[i * 3 + 1] = particle.y;
+                    positions[i * 3 + 2] = particle.z;
+                });
+
+                scene.userData.points.geometry.attributes.position.needsUpdate = true;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        document.addEventListener('DOMContentLoaded', initThreeJS);
+    </script>
+</body>
+</html>
